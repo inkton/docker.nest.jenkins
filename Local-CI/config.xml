@@ -1,0 +1,51 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<flow-definition plugin="workflow-job@2.31">
+  <actions/>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties/>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2.61">
+    <script>pipeline {
+    agent any
+    
+    stages 
+    {
+        stage(&apos;Start&apos;) {
+            steps {
+                sh &apos;rm -fr $NEST_FOLDER_PUBLISH&apos;
+            }
+        }
+
+        stage(&apos;Restore&apos;) {
+            steps {
+                sh &apos;ssh $NEST_CI_BUILD_MACHINE dotnet restore $NEST_FOLDER_SOURCE&apos;
+            }
+        }
+        
+        stage(&apos;Build&apos;) {
+            steps {
+                sh &apos;ssh $NEST_CI_BUILD_MACHINE dotnet clean --configuration Release $NEST_FOLDER_SOURCE&apos;
+                sh &apos;ssh $NEST_CI_BUILD_MACHINE dotnet build --configuration Release --output $NEST_FOLDER_PUBLISH $NEST_FOLDER_SOURCE&apos;
+            }
+        }
+
+        stage(&apos;Test&apos;) {
+            steps {
+                sh &apos;ssh $NEST_CI_BUILD_MACHINE dotnet test --configuration Release $NEST_FOLDER_SOURCE /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura&apos;
+                sh &apos;ssh $NEST_CI_BUILD_MACHINE /root/.dotnet/tools/reportgenerator -reports:$NEST_FOLDER_SOURCE/*/*/coverage.cobertura.xml -targetdir:$NEST_FOLDER_PUBLISH/reports&apos;
+            }
+        }
+        
+        stage(&apos;Report&apos;) {
+            steps {
+                publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: &apos;/var/app/publish/reports&apos;, reportFiles: &apos;index.htm&apos;, reportName: &apos;Code Coverage Report&apos;, reportTitles: &apos;&apos;])
+            }
+        }
+    }
+}</script>
+    <sandbox>true</sandbox>
+  </definition>
+  <triggers/>
+  <authToken>nesty</authToken>
+  <disabled>false</disabled>
+</flow-definition>
