@@ -45,6 +45,7 @@ proc.waitFor()
 
 FileOutputStream out4 = new FileOutputStream(new File("/root/.ssh/config"))
 PrintStream printStream = new PrintStream(out4);
-printStream.print("Host nest\n\tHostName "+env['NEST_APP_TAG']+".nestapp.yt\n\tUser "+env['NEST_CONTACT_ID']+"\nHost *\n\tStrictHostKeyChecking no\n")
+printStream.print("Host nest\n\tHostName "+env['NEST_APP_TAG']+".nestapp.yt\n\tUser "+env['NEST_CONTACT_ID']+"\nHost *\n\tStrictHostKeyChecking no\n\tCheckHostIP no\n")
+
 printStream.close();
 
