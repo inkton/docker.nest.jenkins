@@ -25,5 +25,7 @@ RUN /usr/local/bin/install-plugins.sh < /usr/share/jenkins/ref/plugins.txt && \
     sudo \
     unzip \
   && pip install --upgrade pip \
+  && git clone https://github.com/inkton/nester.cli.git /usr/local/nester \
+  && cd /usr/local/nester && make install \
   && rm -rf /var/cache/apk/* \
   && mkdir /var/app

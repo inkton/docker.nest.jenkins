@@ -1,9 +1,18 @@
 <?xml version='1.1' encoding='UTF-8'?>
 <flow-definition plugin="workflow-job@2.31">
+  <actions>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobAction plugin="pipeline-model-definition@1.3.4.1"/>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction plugin="pipeline-model-definition@1.3.4.1">
+      <jobProperties/>
+      <triggers/>
+      <parameters/>
+      <options/>
+    </org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction>
+  </actions>
   <description></description>
   <keepDependencies>false</keepDependencies>
   <properties/>
-  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2.61">
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2.62">
     <script>pipeline {
     agent any
     
@@ -12,53 +21,50 @@
         stage(&apos;Start&apos;) {
             steps {
                 sh &apos;rm -fr $NEST_FOLDER_PUBLISH&apos;
+		        sh &apos;rm -fr /var/app/publish/reports&apos;
             }
         }
 
         stage(&apos;Restore&apos;) {
             steps {
-                sh &apos;ssh $NEST_CI_BUILD_MACHINE dotnet restore $NEST_FOLDER_SOURCE&apos;
+		        sh &apos;nester deployment restore_all&apos;
             }
         }
         
         stage(&apos;Build&apos;) {
             steps {
-                sh &apos;ssh $NEST_CI_BUILD_MACHINE dotnet clean --configuration Release $NEST_FOLDER_SOURCE&apos;
-                sh &apos;ssh $NEST_CI_BUILD_MACHINE dotnet build --configuration Release --output $NEST_FOLDER_PUBLISH $NEST_FOLDER_SOURCE&apos;
+                sh &apos;nester deployment release_clean_all&apos;
+                sh &apos;nester deployment release_build_all&apos;
             }
         }
 
         stage(&apos;Test&apos;) {
             steps {
-                sh &apos;ssh $NEST_CI_BUILD_MACHINE dotnet test --configuration Release $NEST_FOLDER_SOURCE /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura&apos;
-                sh &apos;ssh $NEST_CI_BUILD_MACHINE /root/.dotnet/tools/reportgenerator -reports:$NEST_FOLDER_SOURCE/*/*/coverage.cobertura.xml -targetdir:$NEST_FOLDER_PUBLISH/reports&apos;
+                sh &apos;nester deployment release_test_all&apos;
             }
         }
         
         stage(&apos;Report&apos;) {
             steps {
+                sh &apos;nester deployment release_coverage_report&apos;
                 publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: &apos;/var/app/publish/reports&apos;, reportFiles: &apos;index.htm&apos;, reportName: &apos;Code Coverage Report&apos;, reportTitles: &apos;&apos;])
             }
         }
         
         stage(&apos;Upload&apos;) {
             steps {
-                sh &apos;$RSYNC /var/app/app.nest nest:/var/app&apos;
-                sh &apos;$RSYNC /var/app/app.json nest:/var/app&apos;
-                sh &apos;$RSYNC /var/app/nest nest:/var/app&apos;
-                sh &apos;$RSYNC /var/app/nest nest:/var/app&apos;
-                sh &apos;$RSYNC /var/app/downtime/ nest:/var/app/downtime/&apos;
-                sh &apos;$RSYNC /var/app/source/ nest:/var/app/source/&apos;
+                sh &apos;nester deployment release_upload_all&apos;
             }
         }
         
         stage(&apos;Deploy&apos;) {
             steps {
-                sh &quot;ssh nest &apos;deploy&apos;&quot;
+                sh &apos;nester deployment deploy&apos;
             }
-        }
+        }        
     }
-}</script>
+}
+</script>
     <sandbox>true</sandbox>
   </definition>
   <triggers/>
