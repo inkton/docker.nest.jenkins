@@ -12,7 +12,7 @@ ENV RSYNC="/usr/bin/rsync -vzr --exclude=.git --exclude=bin --exclude=obj --time
 #automatically installing all plugins
 COPY plugins.txt /usr/share/jenkins/ref/plugins.txt
 COPY init-nester.groovy /var/jenkins_home/init.groovy.d/init-nester.groovy
-COPY Local-CI /var/jenkins_home/jobs/Local-CI
+COPY Local-Ci /var/jenkins_home/jobs/Local-Ci
 COPY Remote-Cd /var/jenkins_home/jobs/Remote-Cd
 
 RUN /usr/local/bin/install-plugins.sh < /usr/share/jenkins/ref/plugins.txt && \
